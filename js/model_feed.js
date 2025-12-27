@@ -21,7 +21,7 @@ async function loadPublicFeed() {
         files.filter(f => f.toLowerCase().includes(filter.toLowerCase())).forEach(file => {
             const name = file.split('/').pop();
             const card = document.createElement('div');
-            card.className = "bg-gray-900 p-2 mb-2 rounded border border-gray-700 hover:border-red-500 cursor-pointer";
+            card.draggable = true; card.className = "bg-gray-900 p-2 mb-2 rounded border border-gray-700 hover:border-red-500 cursor-pointer";
             card.innerHTML = `
                 <p class="text-[9px] text-gray-400 truncate">${name}</p>
                 <button onclick="loadModelIntoCanvas('${file.replace('../', '')}')" 
@@ -36,3 +36,9 @@ async function loadPublicFeed() {
     renderList();
 }
 document.addEventListener('DOMContentLoaded', loadPublicFeed);
+document.addEventListener('dragstart', (e) => {
+    if (e.target.closest('.bg-gray-900')) {
+        const file = e.target.querySelector('button').getAttribute('onclick').match(/'([^']+)'/)[1];
+        e.dataTransfer.setData('text/plain', file);
+    }
+});

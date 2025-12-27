@@ -374,5 +374,6 @@ error_reporting(E_ALL);
 <script src="js/upload_handler.js"></script>
 <script src="js/canvas_tools.js"></script>
 <script src="js/model_feed.js"></script>
+<script src="js/drag_drop_handler.js"></script>
 </body>
 </html>
