@@ -380,5 +380,6 @@ error_reporting(E_ALL);
 <script src="js/skyrim_card.js"></script>
 <script src="js/interaction_handler.js"></script>
 <script src="js/skyrim_card.js"></script>
+<div id="activityLog" class="fixed bottom-0 left-0 w-full h-24 bg-black/60 text-green-400 font-mono text-[10px] p-2 overflow-y-auto z-[100] border-t border-green-900/50"></div>
 </body>
 </html>
