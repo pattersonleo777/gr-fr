@@ -6,6 +6,7 @@ error_reporting(E_ALL);
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fantasy Rally App - Gods Rods</title>
@@ -371,5 +372,6 @@ error_reporting(E_ALL);
     <script src="js/app.js"></script>
 <script src="js/upload_handler.js"></script>
 <script src="js/upload_handler.js"></script>
+<script src="js/canvas_tools.js"></script>
 </body>
 </html>
