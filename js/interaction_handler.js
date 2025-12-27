@@ -1,44 +1,42 @@
 let selectedAsset = null;
 let tapCount = 0;
-let tapTimer = null;
 
-// Fix Upload Button
-document.querySelector('button[onclick*="upload"]').onclick = async (e) => {
-    e.preventDefault();
-    const fileInput = document.querySelector('input[type="file"]');
-    if (!fileInput.files[0]) return;
+// Fix Upload Trigger
+document.getElementById('uploadBtn').onclick = () => document.getElementById('assetUploadInput').click();
+
+document.getElementById('assetUploadInput').onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
     const formData = new FormData();
-    formData.append('file', fileInput.files[0]);
+    formData.append('file', file);
     const res = await fetch('/api/upload.php', { method: 'POST', body: formData });
     const data = await res.json();
-    if (data.success) { location.reload(); }
+    if (data.success) location.reload();
+    else alert("Upload failed");
 };
 
-// Handle Asset Interaction (Single Tap to Toggle, Double Tap for 3D Card)
-function handleAssetClick(path, element) {
+// Handle Asset Tap Logic
+window.handleAssetTap = (path, el) => {
     tapCount++;
-    if (tapCount === 1) {
-        tapTimer = setTimeout(() => {
-            // Toggle Selection
-            document.querySelectorAll('.asset-item').forEach(el => el.classList.remove('border-blue-500'));
+    setTimeout(() => {
+        if (tapCount === 1) {
+            // Single Tap: Select for Canvas
+            document.querySelectorAll('.asset-card').forEach(c => c.style.border = "none");
+            el.style.border = "2px solid #ef4444";
             selectedAsset = path;
-            element.classList.add('border-blue-500');
-            tapCount = 0;
-        }, 250);
-    } else {
-        clearTimeout(tapTimer);
+        } else if (tapCount === 2) {
+            // Double Tap: Skyrim 3D Card
+            open3DCard(path);
+        }
         tapCount = 0;
-        open3DCard(path); // Double Tap: Skyrim-style popup
-    }
-}
+    }, 300);
+};
 
-// Canvas Tap to Add
+// Canvas Tap to Place
 document.getElementById('rallyView').onclick = () => {
     if (selectedAsset) {
-        if (selectedAsset.endsWith('.glb')) loadModelIntoCanvas(selectedAsset);
-        else loadTextureToModel(selectedAsset);
+        selectedAsset.endsWith('.glb') ? loadModelIntoCanvas(selectedAsset) : loadTextureToModel(selectedAsset);
         selectedAsset = null;
-        document.querySelectorAll('.asset-item').forEach(el => el.classList.remove('border-blue-500'));
     }
 };

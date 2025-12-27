@@ -272,12 +272,12 @@ error_reporting(E_ALL);
         <div id="rallyView" class="hidden w-full h-[85vh] flex flex-col overflow-hidden rounded-2xl shadow-2xl bg-gray-800">
 <div class="p-4 bg-gray-800 rounded-lg mb-4"> 
     <h3 class="text-white mb-2">Upload Asset</h3> 
-    <input type="file" id="userFileUpload" class="text-xs text-gray-400 mb-2"> 
+    <input type="file" id="assetUploadInput" class="hidden"> 
     <button onclick="uploadFile()" class="w-full py-1 bg-green-600 text-white rounded text-xs">Upload</button> 
 </div>
 <div class="p-4 bg-gray-800 rounded-lg mb-4"> 
     <h3 class="text-white mb-2">Upload Asset</h3> 
-    <input type="file" id="userFileUpload" class="text-xs text-gray-400 mb-2"> 
+    <input type="file" id="assetUploadInput" class="hidden"> 
     <button onclick="uploadFile()" class="w-full py-1 bg-green-600 text-white rounded text-xs">Upload</button> 
 </div>
             <!-- Header (existing code continues...) -->
