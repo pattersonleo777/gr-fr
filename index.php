@@ -370,5 +370,6 @@ error_reporting(E_ALL);
     <script src="js/auth_v2.js"></script>
     <script src="js/app.js"></script>
 <script src="js/upload_handler.js"></script>
+<script src="js/upload_handler.js"></script>
 </body>
 </html>
