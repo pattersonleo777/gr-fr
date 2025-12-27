@@ -77,3 +77,29 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
     renderer.setSize(container.clientWidth, container.clientHeight);
 });
+async function handleUpload(event) {
+    const file = event.target.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch('/api/upload.php', { method: 'POST', body: formData });
+    const data = await res.json();
+
+    if (data.success) {
+        loadModelInto3D(data.filePath);
+    } else {
+        alert("Upload failed: " + data.message);
+    }
+}
+
+function loadModelInto3D(path) {
+    const loader = new THREE.GLTFLoader();
+    loader.load(path, (gltf) => {
+        scene.add(gltf.scene);
+        // Add to gallery
+        const img = document.createElement('div');
+        img.className = "p-2 border rounded bg-gray-800 text-xs";
+        img.innerText = "New 3D Asset";
+        document.getElementById('assetGallery').appendChild(img);
+    });
+}
