@@ -56,3 +56,10 @@ async function loadGallery() {
         grid.appendChild(img);
     });
 }
+window.addEventListener('resize', () => {
+    const container = document.getElementById('rallyView');
+    if (!container || !camera || !renderer) return;
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+});
