@@ -6,8 +6,6 @@ $data = json_decode(file_get_contents('php://input'), true);
 
 if (($data['action'] ?? '') === 'login') {
     // Captcha Validation
-    $recaptcha_secret = "6Ld3cTgsAAAAAKKeH_3F4AR9iFEmXMFNUe5qLFx8";
-    $response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=$recaptcha_secret&response=" . $data['captcha']);
     $responseKeys = json_decode($response, true);
     
     if (!$responseKeys["success"]) {

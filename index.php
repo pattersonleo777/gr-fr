@@ -6,7 +6,6 @@ error_reporting(E_ALL);
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fantasy Rally App - Gods Rods</title>
@@ -112,7 +111,6 @@ error_reporting(E_ALL);
         <div class="modal-content">
             <h2 class="text-2xl font-bold text-white mb-6">Login to Fantasy Rally</h2>
             <form id="loginForm" class="space-y-4">
-<div class="g-recaptcha mb-4" data-sitekey="6Ld3cTgsAAAAAFkCOjwHzQg6MaUW0OFHdBfansTA"></div>
                 <div>
                     <label class="block text-gray-300 text-sm mb-2">Username or Email</label>
                     <input type="text" id="loginUsername" required
