@@ -1,386 +1,185 @@
-<?php session_start(); $isLoggedIn = isset($_SESSION["user_id"]); $username = $isLoggedIn ? $_SESSION["username"] : ""; ?>
-<?php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fantasy Rally App - Gods Rods</title>
-    <meta name="description" content="Premium performance racing parts and 3D rally design workspace">
-    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#111111">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Bubble Drum Pad</title>
+    
+    <link rel="manifest" href="data:application/manifest+json,{
+      \"name\": \"Bubble Drum Pad\",
+      \"short_name\": \"DrumPad\",
+      \"start_url\": \".\",
+      \"display\": \"standalone\",
+      \"background_color\": \"#111111\",
+      \"theme_color\": \"#111111\",
+      \"icons\": [
+        { \"src\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==\", \"sizes\": \"192x192\", \"type\": \"image/png\" }
+      ]
+    }">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body { margin:0; padding:0; background:#111; color:#f0f0f0; font-family:Arial,sans-serif; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        #container { display: flex; flex-direction: column; height: 100vh; }
+        #grid-container { flex: 1; position: relative; background: #000; overflow: hidden; }
+        #controls { padding: 10px; background: #222; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes flash { 0% { background-color: rgba(255,255,255,0.8); box-shadow: 0 0 10px rgba(255,255,255,0.8); } 50% { background-color: rgba(255,255,255,0.3); box-shadow: 0 0 5px rgba(255,255,255,0.3); } 100% { background-color: rgba(255,255,255,0.8); box-shadow: 0 0 10px rgba(255,255,255,0.8); } }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 0.7; } }
         
-        .font-inter { font-family: 'Inter', sans-serif; }
-        
-        #rallyHeader {
-            min-height: 60px;
-            height: 80px;
+        .bubble { 
+            position: absolute; 
+            border-radius: 50%; 
+            background-color: rgba(100,100,100,0.6); 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 10px; 
+            color: transparent; 
             user-select: none;
-            transition: height 0.3s ease-out;
+            touch-action: manipulation;
         }
+        .bubble.active { animation: flash 0.5s infinite; background-color: rgba(255,255,255,0.8); color: #000; }
+        .bubble.pattern { animation: pulse 1s infinite; background-color: rgba(52, 152, 219, 0.8); color: #fff; }
+        .bubble:hover { transform: scale(1.2); background-color: rgba(150,150,150,0.8); }
+        .bubble:active { transform: scale(0.95); }
         
-        #resizeHandle { cursor: ns-resize; }
-        #rallySidebar { transition: width 0.3s ease, min-width 0.3s ease; }
+        .control-btn { background: #444; color: #f0f0f0; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; transition: all 0.3s; font-size: 14px; }
+        .control-btn.active { background: #3498db; color: #fff; }
+        .control-btn.preset { background: #27ae60; }
+        .control-btn.preset.active { background: #2ecc71; }
         
-        .loading-spinner {
-            border: 3px solid #f3f4f6;
-            border-top: 3px solid #3b82f6;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+        .tempo-control { display: flex; align-items: center; font-size: 14px; }
+        .tempo-control input { width: 80px; padding: 8px; background: #333; color: #fff; border: 1px solid #666; border-radius: 6px; }
+        
+        @media (max-width: 768px) {
+            .bubble { width: 50px !important; height: 50px !important; font-size: 12px !important; }
+            .control-btn { padding: 12px 20px; font-size: 16px; }
+            #controls { padding: 15px; }
         }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .fade-in { animation: fadeIn 0.5s ease-in; }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-        }
-        
-        .modal.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .modal-content {
-            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-            padding: 2rem;
-            border-radius: 1rem;
-            max-width: 400px;
-            width: 90%;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            border: 1px solid #374151;
-        }
-        
-        .status-message {
-            font-family: 'Courier New', monospace;
-            font-size: 0.875rem;
-            padding: 0.5rem;
-            margin: 0.25rem 0;
-            border-left: 3px solid;
-            background: rgba(0, 0, 0, 0.5);
-        }
-        
-        .status-success { border-color: #10b981; color: #10b981; }
-        .status-error { border-color: #ef4444; color: #ef4444; }
-        .status-info { border-color: #3b82f6; color: #3b82f6; }
     </style>
 </head>
-<body class="bg-gray-900 font-inter p-4 sm:p-6 md:p-8 min-h-screen flex justify-center">
-<header class="w-full p-4 bg-gray-900 border-b border-gray-800 flex justify-between items-center sticky top-0 z-50"> 
-    <div class="flex items-center gap-4"> 
-        <span class="text-cyan-400 font-bold text-xl">FANTASY RALLY</span> 
-    </div> 
-    <div class="flex items-center gap-6"> 
-        <a href="index.php" class="text-gray-300 hover:text-white text-sm">Home</a> 
-        <?php if($isLoggedIn): ?> 
-            <a href="profile.php" class="text-gray-300 hover:text-white text-sm">My Profile</a> 
-            <div class="flex items-center gap-2 border-l border-gray-700 pl-6"> 
-                <span class="text-xs text-gray-400">Logged in as:</span> 
-                <span class="text-sm font-semibold text-fuchsia-400"><?php echo htmlspecialchars($username); ?></span> 
-            </div> 
-        <?php endif; ?> 
-    </div> 
-</header>
-    <!-- Login Modal -->
-    <div id="loginModal" class="modal">
-        <div class="modal-content">
-            <h2 class="text-2xl font-bold text-white mb-6">Login to Fantasy Rally</h2>
-            <form id="loginForm" class="space-y-4">
-                <div>
-                    <label class="block text-gray-300 text-sm mb-2">Username or Email</label>
-                    <input type="text" id="loginUsername" required
-                           class="w-full p-3 rounded bg-gray-700 border border-gray-600 text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-gray-300 text-sm mb-2">Password</label>
-                    <input type="password" id="loginPassword" required
-                           class="w-full p-3 rounded bg-gray-700 border border-gray-600 text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
-                </div>
-                <div id="loginError" class="text-red-400 text-sm hidden"></div>
-                <div class="flex gap-2">
-                    <button type="submit" class="flex-1 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded transition">
-                        Login
-                    </button>
-                    <button type="button" onclick="closeModal('loginModal')" 
-                            class="flex-1 py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded transition">
-                        Cancel
-                    </button>
-                </div>
-                <p class="text-center text-gray-400 text-sm">
-                    Don't have an account? 
-                    <a href="#" onclick="switchModal('loginModal', 'registerModal')" class="text-cyan-400 hover:text-cyan-300">Register</a>
-                </p>
-            </form>
+<body>
+    <div id="container">
+        <div id="grid-container"></div>
+        <div id="controls">
+            <button id="play-btn" class="control-btn">Play</button>
+            <button id="stop-btn" class="control-btn">Stop</button>
+            <button id="clear-btn" class="control-btn">Clear</button>
+            <button id="wave-btn" class="control-btn preset">Wave Play</button>
+            <div class="tempo-control">
+                <span>Tempo:</span>
+                <input type="range" id="tempo" min="40" max="240" value="120">
+                <span id="tempo-value">120 BPM</span>
+            </div>
         </div>
     </div>
 
-    <!-- Register Modal -->
-    <div id="registerModal" class="modal">
-        <div class="modal-content">
-            <h2 class="text-2xl font-bold text-white mb-6">Register for Fantasy Rally</h2>
-            <form id="registerForm" class="space-y-4">
-                <div>
-                    <label class="block text-gray-300 text-sm mb-2">Username</label>
-                    <input type="text" id="regUsername" required
-                           class="w-full p-3 rounded bg-gray-700 border border-gray-600 text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-gray-300 text-sm mb-2">Email</label>
-                    <input type="email" id="regEmail" required
-                           class="w-full p-3 rounded bg-gray-700 border border-gray-600 text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-gray-300 text-sm mb-2">Display Name</label>
-                    <input type="text" id="regDisplayName"
-                           class="w-full p-3 rounded bg-gray-700 border border-gray-600 text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-gray-300 text-sm mb-2">Password (min 8 characters)</label>
-                    <input type="password" id="regPassword" required minlength="8"
-                           class="w-full p-3 rounded bg-gray-700 border border-gray-600 text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
-                </div>
-                <div id="registerError" class="text-red-400 text-sm hidden"></div>
-                <div class="flex gap-2">
-                    <button type="submit" class="flex-1 py-3 bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-bold rounded transition">
-                        Register
-                    </button>
-                    <button type="button" onclick="closeModal('registerModal')" 
-                            class="flex-1 py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded transition">
-                        Cancel
-                    </button>
-                </div>
-                <p class="text-center text-gray-400 text-sm">
-                    Already have an account? 
-                    <a href="#" onclick="switchModal('registerModal', 'loginModal')" class="text-cyan-400 hover:text-cyan-300">Login</a>
-                </p>
-            </form>
-        </div>
-    </div>
-
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
-        <div class="text-center">
-            <div class="loading-spinner mx-auto mb-4"></div>
-            <p class="text-white text-xl">Loading Fantasy Rally...</p>
-            <p id="loadingStatus" class="text-gray-400 text-sm mt-2">Initializing...</p>
-        </div>
-    </div>
-
-    <!-- Application Container -->
-    <div id="appContainer" class="w-full max-w-6xl">
-        <!-- Home View -->
-        <div id="homeView" class="w-full space-y-6">
-            <!-- Auth Buttons -->
-            <div id="authButtons" class="<?php echo $isLoggedIn ? 'hidden' : ''; ?> flex justify-end gap-3 mb-4">
-                <button onclick="openModal('loginModal')" class="px-6 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-lg transition">
-                    Login
-                </button>
-                <button onclick="openModal('registerModal')" class="px-6 py-2 bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-semibold rounded-lg transition">
-                    Register
-                </button>
-            </div>
-            
-            <div id="userInfo" class="<?php echo $isLoggedIn ? '' : 'hidden'; ?> flex justify-end gap-4 mb-4 text-white">
-                <span>Welcome, <strong id="displayUsername"><?php echo htmlspecialchars($username); ?></strong>!</span>
-                <span class="text-green-400">$<span id="headerCashBalance">0</span></span>
-                <button onclick="location.href='logout.php'" class="px-4 py-1 bg-red-600 hover:bg-red-700 rounded transition text-sm">Logout</button>
-            </div>
-
-            <!-- Banner 1: Gods Rods -->
-            <div class="relative overflow-hidden rounded-2xl shadow-2xl h-80 sm:h-96 md:h-[480px] bg-gradient-to-br from-red-900 via-gray-900 to-black">
-                <div class="absolute inset-0 bg-black bg-opacity-40 flex flex-col items-center justify-center text-white p-4 text-center">
-                    <h1 class="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black uppercase tracking-wider mb-2 drop-shadow-lg">
-                        Gods Rods
-                    </h1>
-                    <p class="text-lg sm:text-xl md:text-2xl font-light mb-8 drop-shadow-md">
-                        Premium Performance Racing Parts
-                    </p>
-                    <a href="#" class="inline-block px-8 py-3 bg-white text-gray-900 font-bold uppercase rounded-full shadow-lg transition duration-300 hover:bg-gray-200 text-sm sm:text-base">
-                        Shop Now
-                    </a>
-                </div>
-            </div>
-            
-            <!-- Banner 2: Fantasy Rally -->
-            <div id="fantasyRallyBanner" class="relative overflow-hidden rounded-2xl shadow-2xl h-80 sm:h-96 md:h-[480px] bg-gray-900">
-                <div id="canvasContainer" class="absolute inset-0 z-0">
-                    <canvas id="rally3DCanvas" class="w-full h-full"></canvas>
-                </div>
-                <div class="absolute inset-0 bg-black bg-opacity-40 flex flex-col items-center justify-center text-white p-4 text-center z-10">
-                    <h1 class="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black uppercase tracking-wider mb-2 drop-shadow-lg">
-                        Fantasy Rally
-                    </h1>
-                    <p class="text-lg sm:text-xl md:text-2xl font-light mb-8 drop-shadow-md">
-                        Ultimate Racing Experience
-                    </p>
-                    <button id="enterRallyButton" class="inline-block px-8 py-3 bg-white text-gray-900 font-bold uppercase rounded-full shadow-lg transition duration-300 hover:bg-gray-200 text-sm sm:text-base">
-                        Enter Rally Hub
-                    </button>
-                </div>
-            </div>
-            
-            <!-- 3D Explanation -->
-            <div class="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-xl text-gray-200 border border-gray-700">
-                <h2 class="text-2xl sm:text-3xl font-bold mb-4 text-cyan-400">3D Model Dissection Theory</h2>
-                <p class="text-base sm:text-lg mb-4 leading-relaxed">
-                    The rotating model above demonstrates real-time 3D rendering using Three.js. Achieving a truly dissectible car model requires converting 2D images to 3D geometry and then slicing that geometry into separate components.
-                </p>
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div>
-                        <h3 class="text-xl font-semibold mb-2 text-white">1. 2D to 3D Conversion 🚗</h3>
-                        <p class="text-sm sm:text-base mb-3 text-gray-300">
-                            Use AI Image-to-3D generators (Hyper3D, Meshy.ai) to create initial 3D meshes from images. For detailed internal components, professional 3D software like Blender is recommended.
-                        </p>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-semibold mb-2 text-white">2. 3D Model Dissection 🛠️</h3>
-                        <p class="text-sm sm:text-base mb-3 text-gray-300">
-                            Use Blender's Bisect Tool or Boolean operations to split the mesh into separate parts. These components can then be animated to reveal internal structure.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const sounds = [
+            {name: 'Kick', freq: 150, type: 'sine', decay: 0.3},
+            {name: 'Snare', freq: 200, noise: true, decay: 0.2},
+            {name: 'HiHat', freq: 300, noise: true, decay: 0.05},
+            {name: 'Clap', freq: 600, noise: true, decay: 0.1}
+        ];
         
-        <!-- Rally Hub View (Initially hidden) -->
-        <div id="rallyView" class="hidden w-full h-[85vh] flex flex-col overflow-hidden rounded-2xl shadow-2xl bg-gray-800">
-<div class="p-4 bg-gray-800 rounded-lg mb-4"> 
-    <h3 class="text-white mb-2">Upload Asset</h3> 
-    <input type="file" id="assetUploadInput" class="hidden"> 
-    <button onclick="uploadFile()" class="w-full py-1 bg-green-600 text-white rounded text-xs">Upload</button> 
-</div>
-<div class="p-4 bg-gray-800 rounded-lg mb-4"> 
-    <h3 class="text-white mb-2">Upload Asset</h3> 
-    <input type="file" id="assetUploadInput" class="hidden"> 
-    <button onclick="uploadFile()" class="w-full py-1 bg-green-600 text-white rounded text-xs">Upload</button> 
-</div>
-            <!-- Header (existing code continues...) -->
-            <div id="rallyHeader" class="bg-gray-900 text-white flex-shrink-0 relative">
-                <div class="p-3 flex justify-between items-center h-full">
-                    <div class="flex items-center space-x-4">
-                        <div class="text-xl font-mono text-green-400">$<span id="cashBalance">0</span></div>
-                        <div class="text-lg text-gray-300 font-semibold hidden sm:block">
-                            User: <span id="userNamePlaceholder">Guest</span>
-                        </div>
-                    </div>
-                    <div class="text-xl sm:text-2xl font-bold uppercase tracking-wider text-fuchsia-400 flex items-center">
-                        <button id="toggleSidebar" class="p-2 mr-2 sm:mr-3 bg-gray-700 hover:bg-gray-600 rounded-full transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
-                        </button>
-                        <span class="hidden sm:inline">FANTASY RALLY HUB</span>
-                    </div>
-                    <div class="flex items-center text-lg text-yellow-400">
-                        <span id="friendsOnline">0</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 ml-1" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-4.42 3.59-8 8-8 4.41 0 8 3.58 8 8 0 4.41-3.59 8-8 8z"/>
-                        </svg>
-                    </div>
-                </div>
-                <div id="resizeHandle" class="absolute bottom-0 left-0 w-full h-2 bg-gray-700 hover:bg-cyan-500 transition"></div>
-            </div>
+        function playSound(sound) {
+            let source;
+            const gain = audioCtx.createGain();
+            gain.connect(audioCtx.destination);
+            gain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + sound.decay);
             
-            <!-- Main Content (same as before) -->
-            <div class="flex flex-1 overflow-hidden">
-                <div id="rallySidebar" class="bg-gray-700 min-w-0 w-0 md:w-1/4 max-w-xs flex-shrink-0 text-white overflow-y-auto p-0 md:p-4">
-                    <h3 class="text-xl font-bold mb-4 text-cyan-400 border-b border-gray-600 pb-2 hidden md:block">AI Model Integration</h3>
-                    <div class="space-y-4">
-                        <div class="p-3 bg-gray-800 rounded-lg">
-                            <h4 class="font-bold text-sm mb-2 text-gray-300">System Status</h4>
-                            <div id="statusConsole" class="max-h-32 overflow-y-auto text-xs">
-                                <div class="status-message status-info">System initialized</div>
-                            </div>
-                        </div>
-                        
-                        <div class="p-3 bg-gray-600 rounded-lg">
-                            <label for="addUrl" class="block text-sm font-medium mb-1">Load 3D Model:</label>
-                            <input type="url" id="addUrl" placeholder="https://example.com/model.glb" 
-                                   class="w-full p-2 rounded bg-gray-700 border border-gray-500 text-white text-sm">
-                            <button id="addAssetBtn" class="w-full mt-2 py-2 bg-cyan-600 hover:bg-cyan-700 rounded font-semibold transition text-sm">
-                                Load Model
-                            </button>
-                        </div>
-                        
-                        <div class="p-3 bg-gray-600 rounded-lg">
-                            <h4 class="font-bold text-sm mb-2">Quick Actions</h4>
-                            <div class="space-y-2">
-                                <button id="loadSampleCar" class="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm">
-                                    🚗 Load Sample Car
-                                </button>
-                                <button id="clearModel" class="w-full py-2 bg-red-600 hover:bg-red-700 rounded text-sm">
-                                    🗑️ Clear Model
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="flex-1 bg-gray-900 relative p-2 sm:p-4 flex flex-col">
-                    <div class="flex justify-between items-center mb-2">
-                        <h2 class="text-lg sm:text-xl text-white font-semibold">3D Rally Design Workspace</h2>
-                        <div id="canvasLoading" class="hidden">
-                            <div class="loading-spinner w-6 h-6"></div>
-                        </div>
-                    </div>
+            if (sound.noise) {
+                const bufferSize = audioCtx.sampleRate * sound.decay;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                source = audioCtx.createBufferSource();
+                source.buffer = buffer;
+            } else {
+                source = audioCtx.createOscillator();
+                source.frequency.value = sound.freq;
+                source.type = sound.type || 'sine';
+            }
+            source.connect(gain);
+            source.start();
+            source.stop(audioCtx.currentTime + sound.decay);
+        }
+        
+        const rows = 4;
+        const cols = 8;
+        const grid = [];
+        let playing = false;
+        let waveMode = false;
+        let currentStep = 0;
+        let intervalId = null;
+        const gridContainer = document.getElementById('grid-container');
+
+        function createGrid() {
+            gridContainer.innerHTML = '';
+            grid.length = 0;
+            const bubbleSize = window.innerWidth < 768 ? 50 : 60;
+            const spacingX = (gridContainer.clientWidth - cols * bubbleSize) / (cols + 1);
+            const spacingY = (gridContainer.clientHeight - rows * bubbleSize) / (rows + 1);
+            
+            for (let row = 0; row < rows; row++) {
+                grid[row] = [];
+                for (let col = 0; col < cols; col++) {
+                    const bubble = document.createElement('div');
+                    bubble.className = 'bubble';
+                    bubble.style.width = bubble.style.height = bubbleSize + 'px';
+                    bubble.style.left = (spacingX + col * (bubbleSize + spacingX)) + 'px';
+                    bubble.style.top = (spacingY + row * (bubbleSize + spacingY)) + 'px';
                     
-                    <canvas id="mainRallyCanvas" class="flex-1 bg-gray-800 border-2 border-gray-600 rounded-lg"></canvas>
+                    const trigger = (e) => {
+                        if (e) e.preventDefault();
+                        playSound(sounds[row]);
+                        bubble.classList.add('active');
+                        setTimeout(() => bubble.classList.remove('active'), 200);
+                    };
+                    bubble.addEventListener('touchstart', trigger);
+                    bubble.addEventListener('click', trigger);
                     
-                    <div class="mt-3 flex justify-between items-center flex-wrap gap-2">
-                        <div class="flex gap-2">
-                            <button id="copyCanvasBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg">
-                                📋 Copy
-                            </button>
-                            <button id="resetViewBtn" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-lg">
-                                🔄 Reset
-                            </button>
-                        </div>
-                        <p class="text-xs text-gray-400">Drag • Scroll</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <script src="js/auth_v2.js"></script>
-    <script src="js/app.js"></script>
-<script src="js/upload_handler.js"></script>
-<script src="js/upload_handler.js"></script>
-<script src="js/canvas_tools.js"></script>
-<script src="js/model_feed.js"></script>
-<script src="js/drag_drop_handler.js"></script>
-<script src="js/drag_drop_handler.js"></script>
-<script src="js/interaction_handler.js"></script>
-<script src="js/skyrim_card.js"></script>
-<script src="js/interaction_handler.js"></script>
-<script src="js/skyrim_card.js"></script>
-<div id="activityLog" class="fixed bottom-0 left-0 w-full h-24 bg-black/60 text-green-400 font-mono text-[10px] p-2 overflow-y-auto z-[100] border-t border-green-900/50"></div>
-<div id="activityLog" class="fixed bottom-0 left-0 w-full h-24 bg-black/80 text-white font-mono text-[10px] p-2 overflow-y-auto z-[100] border-t border-red-900/50"></div>
+                    gridContainer.appendChild(bubble);
+                    grid[row][col] = bubble;
+                }
+            }
+        }
+
+        document.getElementById('play-btn').onclick = () => {
+            if (playing) return;
+            playing = true;
+            const tempo = document.getElementById('tempo').value;
+            const stepTime = 60000 / (tempo * 4);
+            intervalId = setInterval(() => {
+                for (let r = 0; r < rows; r++) {
+                    const b = grid[r][currentStep];
+                    b.classList.add('pattern');
+                    playSound(sounds[r]);
+                    setTimeout(() => b.classList.remove('pattern'), 300);
+                }
+                currentStep = (currentStep + 1) % cols;
+            }, stepTime);
+        };
+
+        document.getElementById('stop-btn').onclick = () => {
+            playing = false;
+            clearInterval(intervalId);
+            currentStep = 0;
+        };
+
+        window.onresize = createGrid;
+        createGrid();
+        
+        document.body.addEventListener('touchstart', () => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }, { once: true });
+    </script>
 </body>
 </html>
