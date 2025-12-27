@@ -103,3 +103,53 @@ function loadModelInto3D(path) {
         document.getElementById('assetGallery').appendChild(img);
     });
 }
+
+// Preload models into the gallery UI
+async function preloadModels() {
+    const models = [
+        'car_base.glb', 
+        'engine_v8.glb', 
+        'spoiler_racing.glb'
+    ]; // Add your actual filenames here
+
+    const gallery = document.getElementById('assetGallery');
+    if (!gallery) return;
+
+    models.forEach(modelName => {
+        const item = document.createElement('div');
+        item.className = "p-2 border border-gray-700 rounded bg-gray-900 cursor-pointer hover:bg-gray-800";
+        item.innerHTML = `
+            <p class="text-[10px] text-center mb-1">${modelName}</p>
+            <button onclick="loadModelIntoCanvas('assets/models/${modelName}')" class="w-full bg-blue-700 text-[10px] py-1">Load 3D</button>
+        `;
+        gallery.appendChild(item);
+    });
+}
+
+// Initialize preloading
+document.addEventListener('DOMContentLoaded', preloadModels);
+
+// Preload models into the gallery UI
+async function preloadModels() {
+    const models = [
+        'car_base.glb', 
+        'engine_v8.glb', 
+        'spoiler_racing.glb'
+    ]; // Add your actual filenames here
+
+    const gallery = document.getElementById('assetGallery');
+    if (!gallery) return;
+
+    models.forEach(modelName => {
+        const item = document.createElement('div');
+        item.className = "p-2 border border-gray-700 rounded bg-gray-900 cursor-pointer hover:bg-gray-800";
+        item.innerHTML = `
+            <p class="text-[10px] text-center mb-1">${modelName}</p>
+            <button onclick="loadModelIntoCanvas('assets/models/${modelName}')" class="w-full bg-blue-700 text-[10px] py-1">Load 3D</button>
+        `;
+        gallery.appendChild(item);
+    });
+}
+
+// Initialize preloading
+document.addEventListener('DOMContentLoaded', preloadModels);
