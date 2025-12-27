@@ -58,21 +58,21 @@ async function loadGallery() {
 }
 window.addEventListener('resize', () => {
     const container = document.getElementById('rallyView');
-    if (!container || !camera || !renderer) return;
+    if (!container || typeof camera === "undefined" || !renderer) return;
     camera.aspect = container.clientWidth / container.clientHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(container.clientWidth, container.clientHeight);
 });
 window.addEventListener('resize', () => {
     const container = document.getElementById('rallyView');
-    if (!container || !camera || !renderer) return;
+    if (!container || typeof camera === "undefined" || !renderer) return;
     camera.aspect = container.clientWidth / container.clientHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(container.clientWidth, container.clientHeight);
 });
 window.addEventListener('resize', () => {
     const container = document.getElementById('rallyView');
-    if (!container || !camera || !renderer) return;
+    if (!container || typeof camera === "undefined" || !renderer) return;
     camera.aspect = container.clientWidth / container.clientHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(container.clientWidth, container.clientHeight);
