@@ -112,7 +112,7 @@ error_reporting(E_ALL);
         <div class="modal-content">
             <h2 class="text-2xl font-bold text-white mb-6">Login to Fantasy Rally</h2>
             <form id="loginForm" class="space-y-4">
-<div class="g-recaptcha mb-4" data-sitekey="6Ld_placeholder_actual_key_here"></div>
+<div class="g-recaptcha mb-4" data-sitekey="6LdPbzgsAAAAAKJzkghJ6JofHN1wk5WjhfHrqgK7"></div>
                 <div>
                     <label class="block text-gray-300 text-sm mb-2">Username or Email</label>
                     <input type="text" id="loginUsername" required
