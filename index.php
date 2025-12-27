@@ -367,7 +367,7 @@ error_reporting(E_ALL);
         </div>
     </div>
     
-    <script src="js/auth.js"></script>
+    <script src="js/auth_v2.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
