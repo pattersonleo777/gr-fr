@@ -376,5 +376,7 @@ error_reporting(E_ALL);
 <script src="js/model_feed.js"></script>
 <script src="js/drag_drop_handler.js"></script>
 <script src="js/drag_drop_handler.js"></script>
+<script src="js/interaction_handler.js"></script>
+<script src="js/skyrim_card.js"></script>
 </body>
 </html>
