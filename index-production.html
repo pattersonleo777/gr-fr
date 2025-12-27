@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy Rally App - Gods Rods</title>
+    <meta name="description" content="Premium performance racing parts and 3D rally design workspace">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js - Using specific version for stability -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        
+        .font-inter { font-family: 'Inter', sans-serif; }
+        
+        #rallyHeader {
+            min-height: 60px;
+            height: 80px;
+            user-select: none;
+            transition: height 0.3s ease-out;
+        }
+        
+        #resizeHandle { cursor: ns-resize; }
+        
+        #rallySidebar {
+            transition: width 0.3s ease, min-width 0.3s ease;
+        }
+        
+        .loading-spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Console-style status messages */
+        .status-message {
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            border-left: 3px solid;
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        .status-success { border-color: #10b981; color: #10b981; }
+        .status-error { border-color: #ef4444; color: #ef4444; }
+        .status-info { border-color: #3b82f6; color: #3b82f6; }
+    </style>
+</head>
+<body class="bg-gray-900 font-inter p-4 sm:p-6 md:p-8 min-h-screen flex justify-center">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="loading-spinner mx-auto mb-4"></div>
+            <p class="text-white text-xl">Loading Fantasy Rally...</p>
+            <p id="loadingStatus" class="text-gray-400 text-sm mt-2">Initializing...</p>
+        </div>
+    </div>
+
+    <!-- Application Container -->
+    <div id="appContainer" class="w-full max-w-6xl">
+        <!-- Home View -->
+        <div id="homeView" class="w-full space-y-6">
+            <!-- Banner 1: Gods Rods -->
+            <div class="relative overflow-hidden rounded-2xl shadow-2xl h-80 sm:h-96 md:h-[480px] bg-gradient-to-br from-red-900 via-gray-900 to-black">
+                <div class="absolute inset-0 bg-black bg-opacity-40 flex flex-col items-center justify-center text-white p-4 text-center">
+                    <h1 class="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black uppercase tracking-wider mb-2 drop-shadow-lg">
+                        Gods Rods
+                    </h1>
+                    <p class="text-lg sm:text-xl md:text-2xl font-light mb-8 drop-shadow-md">
+                        Premium Performance Racing Parts
+                    </p>
+                    <a href="#" class="inline-block px-8 py-3 bg-white text-gray-900 font-bold uppercase rounded-full shadow-lg transition duration-300 hover:bg-gray-200 text-sm sm:text-base">
+                        Shop Now
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Banner 2: Fantasy Rally with 3D Visualization -->
+            <div id="fantasyRallyBanner" class="relative overflow-hidden rounded-2xl shadow-2xl h-80 sm:h-96 md:h-[480px] bg-gray-900 flex flex-col items-center justify-center">
+                <!-- 3D Canvas Container -->
+                <div id="canvasContainer" class="absolute inset-0 z-0">
+                    <canvas id="rally3DCanvas" class="w-full h-full"></canvas>
+                </div>
+                <!-- Overlay Text -->
+                <div class="absolute inset-0 bg-black bg-opacity-40 flex flex-col items-center justify-center text-white p-4 text-center z-10">
+                    <h1 class="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black uppercase tracking-wider mb-2 drop-shadow-lg">
+                        Fantasy Rally
+                    </h1>
+                    <p class="text-lg sm:text-xl md:text-2xl font-light mb-8 drop-shadow-md">
+                        Ultimate Racing Experience
+                    </p>
+                    <button id="enterRallyButton" class="inline-block px-8 py-3 bg-white text-gray-900 font-bold uppercase rounded-full shadow-lg transition duration-300 hover:bg-gray-200 text-sm sm:text-base">
+                        Enter Rally Hub
+                    </button>
+                </div>
+                <!-- 3D Loading Indicator -->
+                <div id="banner3DLoading" class="absolute top-4 right-4 z-20 hidden">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+            
+            <!-- 3D Model Dissection Explanation -->
+            <div class="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-xl text-gray-200 mt-6 border border-gray-700">
+                <h2 class="text-2xl sm:text-3xl font-bold mb-4 text-cyan-400">3D Model Dissection Theory</h2>
+                <p class="text-base sm:text-lg mb-4 leading-relaxed">
+                    The rotating model above demonstrates real-time 3D rendering using Three.js. Achieving a truly dissectible car model requires converting 2D images to 3D geometry and then slicing that geometry into separate components.
+                </p>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 text-white">1. 2D to 3D Conversion 🚗</h3>
+                        <p class="text-sm sm:text-base mb-3 text-gray-300">
+                            Use AI Image-to-3D generators (Hyper3D, Meshy.ai) to create initial 3D meshes (OBJ/GLB) from images. For detailed internal components needed for dissection, professional 3D software like Blender is recommended.
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 text-white">2. 3D Model Dissection 🛠️</h3>
+                        <p class="text-sm sm:text-base mb-3 text-gray-300">
+                            Once you have a 3D model, use Blender's Bisect Tool or Boolean operations to split the mesh into separate parts (body panels, engine, chassis). These components can then be animated to "explode" apart, revealing internal structure.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Rally Hub View (Initially hidden) -->
+        <div id="rallyView" class="hidden w-full h-[85vh] flex flex-col overflow-hidden rounded-2xl shadow-2xl bg-gray-800">
+            <!-- Resizable Header -->
+            <div id="rallyHeader" class="bg-gray-900 text-white flex-shrink-0 relative">
+                <div class="p-3 flex justify-between items-center h-full">
+                    <!-- Left: User & Cash -->
+                    <div class="flex items-center space-x-4">
+                        <div class="text-xl font-mono text-green-400">$<span id="cashBalance">12,345</span></div>
+                        <div class="text-lg text-gray-300 font-semibold hidden sm:block">
+                            User: <span id="userNamePlaceholder">RallyDriver_01</span>
+                        </div>
+                    </div>
+                    <!-- Center: Title & Sidebar Toggle -->
+                    <div class="text-xl sm:text-2xl font-bold uppercase tracking-wider text-fuchsia-400 flex items-center">
+                        <button id="toggleSidebar" class="p-2 mr-2 sm:mr-3 bg-gray-700 hover:bg-gray-600 rounded-full transition duration-150" title="Toggle Sidebar">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                        <span class="hidden sm:inline">FANTASY RALLY HUB</span>
+                        <span class="sm:hidden">RALLY HUB</span>
+                    </div>
+                    <!-- Right: Friends Online -->
+                    <div class="flex items-center text-lg text-yellow-400">
+                        <span id="friendsOnline">15</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 ml-1" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-4.42 3.59-8 8-8 4.41 0 8 3.58 8 8 0 4.41-3.59 8-8 8z"/>
+                        </svg>
+                    </div>
+                </div>
+                <!-- Resize Handle -->
+                <div id="resizeHandle" class="absolute bottom-0 left-0 w-full h-2 bg-gray-700 hover:bg-cyan-500 transition duration-150" title="Drag to resize header"></div>
+            </div>
+            
+            <!-- Main Content Area -->
+            <div class="flex flex-1 overflow-hidden">
+                <!-- Sidebar -->
+                <div id="rallySidebar" class="bg-gray-700 min-w-0 w-0 md:w-1/4 max-w-xs flex-shrink-0 text-white overflow-y-auto p-0 md:p-4 transition-all duration-300">
+                    <h3 class="text-xl font-bold mb-4 text-cyan-400 border-b border-gray-600 pb-2 hidden md:block">AI Model Integration</h3>
+                    <div class="space-y-4">
+                        <!-- Status Console -->
+                        <div class="p-3 bg-gray-800 rounded-lg">
+                            <h4 class="font-bold text-sm mb-2 text-gray-300">System Status</h4>
+                            <div id="statusConsole" class="max-h-32 overflow-y-auto text-xs">
+                                <div class="status-message status-info">System initialized</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Load 3D Model -->
+                        <div class="p-3 bg-gray-600 rounded-lg">
+                            <label for="addUrl" class="block text-sm font-medium mb-1">Load 3D Model (.glb/.gltf):</label>
+                            <input type="url" id="addUrl" placeholder="https://example.com/model.glb" class="w-full p-2 rounded bg-gray-700 border border-gray-500 text-white placeholder-gray-400 focus:ring-cyan-500 focus:border-cyan-500 text-sm">
+                            <button id="addAssetBtn" class="w-full mt-2 py-2 bg-cyan-600 hover:bg-cyan-700 rounded font-semibold transition text-sm">
+                                Load Model
+                            </button>
+                        </div>
+                        
+                        <!-- Quick Actions -->
+                        <div class="p-3 bg-gray-600 rounded-lg">
+                            <h4 class="font-bold text-sm mb-2">Quick Actions</h4>
+                            <div class="space-y-2">
+                                <button id="loadSampleCar" class="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm transition">
+                                    🚗 Load Sample Car
+                                </button>
+                                <button id="clearModel" class="w-full py-2 bg-red-600 hover:bg-red-700 rounded text-sm transition">
+                                    🗑️ Clear Model
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- AI Tools -->
+                        <div class="space-y-2">
+                            <div class="p-3 bg-gray-600 rounded-lg">
+                                <h4 class="font-bold text-sm mb-1">Replicate API</h4>
+                                <p class="text-xs text-gray-300 mb-2">Generate 3D assets on-demand</p>
+                                <button onclick="alert('Replicate API integration coming soon!')" class="w-full py-1 bg-green-600 hover:bg-green-700 rounded text-xs transition">
+                                    Generate
+                                </button>
+                            </div>
+                            
+                            <div class="p-3 bg-gray-600 rounded-lg">
+                                <h4 class="font-bold text-sm mb-1">Krea AI</h4>
+                                <p class="text-xs text-gray-300 mb-2">Real-time generation tools</p>
+                                <button onclick="window.open('https://krea.ai', '_blank')" class="w-full py-1 bg-fuchsia-600 hover:bg-fuchsia-700 rounded text-xs transition">
+                                    Open Krea
+                                </button>
+                            </div>
+                            
+                            <div class="p-3 bg-gray-600 rounded-lg">
+                                <h4 class="font-bold text-sm mb-1">Leonardo AI</h4>
+                                <p class="text-xs text-gray-300 mb-2">High-fidelity design prompts</p>
+                                <button onclick="window.open('https://leonardo.ai', '_blank')" class="w-full py-1 bg-indigo-600 hover:bg-indigo-700 rounded text-xs transition">
+                                    Open Leonardo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main 3D Workspace -->
+                <div class="flex-1 bg-gray-900 relative p-2 sm:p-4 flex flex-col">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-lg sm:text-xl text-white font-semibold">3D Rally Design Workspace</h2>
+                        <div id="canvasLoading" class="hidden">
+                            <div class="loading-spinner w-6 h-6"></div>
+                        </div>
+                    </div>
+                    
+                    <canvas id="mainRallyCanvas" class="flex-1 bg-gray-800 border-2 border-gray-600 rounded-lg"></canvas>
+                    
+                    <div class="mt-3 flex justify-between items-center flex-wrap gap-2">
+                        <div class="flex gap-2 flex-wrap">
+                            <button id="copyCanvasBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition">
+                                📋 Copy Image
+                            </button>
+                            <button id="resetViewBtn" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-lg transition">
+                                🔄 Reset View
+                            </button>
+                        </div>
+                        <p class="text-xs sm:text-sm text-gray-400">Drag to rotate • Scroll to zoom</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // === GLOBAL STATE ===
+        const state = {
+            homeView: document.getElementById('homeView'),
+            rallyView: document.getElementById('rallyView'),
+            loadingOverlay: document.getElementById('loadingOverlay'),
+            sidebarOpen: true,
+            headerResizing: false,
+            mainScene: null,
+            mainCamera: null,
+            mainRenderer: null,
+            mainModel: null,
+            isDragging: false,
+            previousMousePosition: { x: 0, y: 0 }
+        };
+        
+        const config = {
+            MIN_HEADER_HEIGHT: 60,
+            MAX_HEADER_HEIGHT: 200
+        };
+        
+        // === UTILITY FUNCTIONS ===
+        function log(message, type = 'info') {
+            const console = document.getElementById('statusConsole');
+            if (!console) return;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const statusClass = `status-${type}`;
+            const entry = document.createElement('div');
+            entry.className = `status-message ${statusClass}`;
+            entry.textContent = `[${timestamp}] ${message}`;
+            console.appendChild(entry);
+            console.scrollTop = console.scrollHeight;
+            
+            // Keep only last 20 messages
+            while (console.children.length > 20) {
+                console.removeChild(console.firstChild);
+            }
+        }
+        
+        function updateLoadingStatus(message) {
+            const status = document.getElementById('loadingStatus');
+            if (status) status.textContent = message;
+        }
+        
+        function hideLoading() {
+            setTimeout(() => {
+                state.loadingOverlay.style.opacity = '0';
+                setTimeout(() => {
+                    state.loadingOverlay.style.display = 'none';
+                }, 500);
+            }, 1000);
+        }
+        
+        // === HOME BANNER 3D SCENE ===
+        function initHome3D() {
+            updateLoadingStatus('Initializing 3D visualization...');
+            
+            const container = document.getElementById('fantasyRallyBanner');
+            const canvas = document.getElementById('rally3DCanvas');
+            const loadingIndicator = document.getElementById('banner3DLoading');
+            
+            if (!container || !canvas || typeof THREE === 'undefined') {
+                log('Three.js not available', 'error');
+                return;
+            }
+            
+            loadingIndicator.classList.remove('hidden');
+            
+            try {
+                const scene = new THREE.Scene();
+                scene.background = null;
+                
+                const camera = new THREE.PerspectiveCamera(
+                    75,
+                    container.clientWidth / container.clientHeight,
+                    0.1,
+                    1000
+                );
+                camera.position.z = 4;
+                
+                const renderer = new THREE.WebGLRenderer({
+                    canvas: canvas,
+                    alpha: true,
+                    antialias: true
+                });
+                renderer.setSize(container.clientWidth, container.clientHeight);
+                renderer.setPixelRatio(window.devicePixelRatio);
+                
+                // Create car group
+                const carGroup = new THREE.Group();
+                
+                // Car body
+                const bodyGeometry = new THREE.BoxGeometry(3.5, 1, 1.5);
+                const bodyMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xcc0000, 
+                    shininess: 150,
+                    emissive: 0x220000
+                });
+                const carBody = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                carBody.position.y = 0.5;
+                carGroup.add(carBody);
+                
+                // Car cabin
+                const cabinGeometry = new THREE.BoxGeometry(1.5, 0.8, 1.2);
+                const cabinMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xffffff, 
+                    transparent: true, 
+                    opacity: 0.8 
+                });
+                const carCabin = new THREE.Mesh(cabinGeometry, cabinMaterial);
+                carCabin.position.set(0.5, 1.3, 0);
+                carGroup.add(carCabin);
+                
+                // Wheels
+                const wheelGeometry = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 16);
+                const wheelMaterial = new THREE.MeshPhongMaterial({ color: 0x111111 });
+                const wheelPositions = [
+                    [-1.5, 0.1, 0.8], [1.5, 0.1, 0.8],
+                    [-1.5, 0.1, -0.8], [1.5, 0.1, -0.8]
+                ];
+                
+                wheelPositions.forEach(pos => {
+                    const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+                    wheel.position.set(pos[0], pos[1], pos[2]);
+                    wheel.rotation.z = Math.PI / 2;
+                    carGroup.add(wheel);
+                });
+                
+                scene.add(carGroup);
+                
+                // Lighting
+                const ambientLight = new THREE.AmbientLight(0x404040, 5);
+                scene.add(ambientLight);
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
+                directionalLight.position.set(5, 5, 5);
+                scene.add(directionalLight);
+                
+                // Animation loop
+                function animate() {
+                    requestAnimationFrame(animate);
+                    carGroup.rotation.y += 0.005;
+                    renderer.render(scene, camera);
+                }
+                
+                // Handle resize
+                function onWindowResize() {
+                    camera.aspect = container.clientWidth / container.clientHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(container.clientWidth, container.clientHeight);
+                }
+                
+                window.addEventListener('resize', onWindowResize);
+                animate();
+                
+                loadingIndicator.classList.add('hidden');
+                log('Home 3D scene initialized', 'success');
+                
+            } catch (error) {
+                log(`Home 3D error: ${error.message}`, 'error');
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+        
+        // === MAIN 3D WORKSPACE ===
+        function initMain3D() {
+            const canvas = document.getElementById('mainRallyCanvas');
+            const loadingIndicator = document.getElementById('canvasLoading');
+            
+            try {
+                loadingIndicator.classList.remove('hidden');
+                log('Initializing main 3D workspace...', 'info');
+                
+                // Scene setup
+                state.mainScene = new THREE.Scene();
+                state.mainScene.background = new THREE.Color(0x1a1a2e);
+                state.mainScene.fog = new THREE.Fog(0x1a1a2e, 10, 50);
+                
+                // Camera
+                state.mainCamera = new THREE.PerspectiveCamera(
+                    75,
+                    canvas.clientWidth / canvas.clientHeight,
+                    0.1,
+                    1000
+                );
+                state.mainCamera.position.set(0, 2, 5);
+                state.mainCamera.lookAt(0, 0, 0);
+                
+                // Renderer
+                state.mainRenderer = new THREE.WebGLRenderer({ 
+                    canvas: canvas, 
+                    antialias: true 
+                });
+                state.mainRenderer.setSize(canvas.clientWidth, canvas.clientHeight);
+                state.mainRenderer.setPixelRatio(window.devicePixelRatio);
+                state.mainRenderer.shadowMap.enabled = true;
+                
+                // Lighting
+                const ambientLight = new THREE.AmbientLight(0x404040, 2);
+                state.mainScene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+                directionalLight.position.set(5, 10, 7.5);
+                directionalLight.castShadow = true;
+                state.mainScene.add(directionalLight);
+                
+                const pointLight = new THREE.PointLight(0x00ffff, 0.5, 50);
+                pointLight.position.set(-5, 5, -5);
+                state.mainScene.add(pointLight);
+                
+                // Grid
+                const gridHelper = new THREE.GridHelper(20, 20, 0x00ffff, 0x444444);
+                state.mainScene.add(gridHelper);
+                
+                // Axes helper
+                const axesHelper = new THREE.AxesHelper(5);
+                state.mainScene.add(axesHelper);
+                
+                // Load placeholder
+                createPlaceholderModel();
+                setupMouseControls();
+                animateMain();
+                
+                loadingIndicator.classList.add('hidden');
+                log('Workspace ready', 'success');
+                
+            } catch (error) {
+                log(`Workspace error: ${error.message}`, 'error');
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+        
+        function createPlaceholderModel() {
+            const group = new THREE.Group();
+            
+            // Body
+            const bodyGeom = new THREE.BoxGeometry(2.5, 0.6, 1.2);
+            const bodyMat = new THREE.MeshPhongMaterial({ 
+                color: 0x3b82f6,
+                shininess: 100 
+            });
+            const body = new THREE.Mesh(bodyGeom, bodyMat);
+            body.position.y = 0.3;
+            body.castShadow = true;
+            group.add(body);
+            
+            // Cabin
+            const cabinGeom = new THREE.BoxGeometry(1.2, 0.5, 1);
+            const cabinMat = new THREE.MeshPhongMaterial({ 
+                color: 0x60a5fa,
+                transparent: true,
+                opacity: 0.9
+            });
+            const cabin = new THREE.Mesh(cabinGeom, cabinMat);
+            cabin.position.set(0.3, 0.85, 0);
+            cabin.castShadow = true;
+            group.add(cabin);
+            
+            // Wheels
+            const wheelGeom = new THREE.CylinderGeometry(0.25, 0.25, 0.2, 16);
+            const wheelMat = new THREE.MeshPhongMaterial({ color: 0x1a1a1a });
+            const wheelPositions = [
+                [-0.8, 0.25, 0.6], [0.8, 0.25, 0.6],
+                [-0.8, 0.25, -0.6], [0.8, 0.25, -0.6]
+            ];
+            
+            wheelPositions.forEach(pos => {
+                const wheel = new THREE.Mesh(wheelGeom, wheelMat);
+                wheel.position.set(pos[0], pos[1], pos[2]);
+                wheel.rotation.z = Math.PI / 2;
+                wheel.castShadow = true;
+                group.add(wheel);
+            });
+            
+            if (state.mainModel) state.mainScene.remove(state.mainModel);
+            state.mainModel = group;
+            state.mainScene.add(state.mainModel);
+            
+            log('Placeholder model loaded', 'success');
+        }
+        
+        function setupMouseControls() {
+            const canvas = document.getElementById('mainRallyCanvas');
+            
+            canvas.addEventListener('mousedown', (e) => {
+                state.isDragging = true;
+                state.previousMousePosition = { x: e.offsetX, y: e.offsetY };
+            });
+            
+            canvas.addEventListener('mousemove', (e) => {
+                if (state.isDragging && state.mainModel) {
+                    const deltaX = e.offsetX - state.previousMousePosition.x;
+                    const deltaY = e.offsetY - state.previousMousePosition.y;
+                    
+                    state.mainModel.rotation.y += deltaX * 0.01;
+                    state.mainModel.rotation.x += deltaY * 0.01;
+                    
+                    state.previousMousePosition = { x: e.offsetX, y: e.offsetY };
+                }
+            });
+            
+            canvas.addEventListener('mouseup', () => state.isDragging = false);
+            canvas.addEventListener('mouseleave', () => state.isDragging = false);
+            
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const zoomSpeed = 0.1;
+                state.mainCamera.position.z += e.deltaY * zoomSpeed * 0.01;
+                state.mainCamera.position.z = Math.max(2, Math.min(20, state.mainCamera.position.z));
+            });
+        }
+        
+        function animateMain() {
+            requestAnimationFrame(animateMain);
+            if (state.mainRenderer && state.mainScene && state.mainCamera) {
+                state.mainRenderer.render(state.mainScene, state.mainCamera);
+            }
+        }
+        
+        function onMainCanvasResize() {
+            if (!state.rallyView.classList.contains('hidden') && state.mainCamera && state.mainRenderer) {
+                const canvas = document.getElementById('mainRallyCanvas');
+                state.mainCamera.aspect = canvas.clientWidth / canvas.clientHeight;
+                state.mainCamera.updateProjectionMatrix();
+                state.mainRenderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            }
+        }
+        
+        function loadAsset(url) {
+            if (typeof THREE.GLTFLoader === 'undefined') {
+                log('GLTFLoader not available', 'error');
+                alert('3D model loader not available. Please refresh the page.');
+                return;
+            }
+            
+            log(`Loading model from: ${url}`, 'info');
+            const loadingIndicator = document.getElementById('canvasLoading');
+            loadingIndicator.classList.remove('hidden');
+            
+            const loader = new THREE.GLTFLoader();
+            loader.load(
+                url,
+                (gltf) => {
+                    if (state.mainModel) state.mainScene.remove(state.mainModel);
+                    state.mainModel = gltf.scene;
+                    
+                    // Auto-scale and center
+                    const box = new THREE.Box3().setFromObject(state.mainModel);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const scale = 3 / maxDim;
+                    
+                    state.mainModel.scale.multiplyScalar(scale);
+                    state.mainModel.position.sub(center.multiplyScalar(scale));
+                    
+                    state.mainScene.add(state.mainModel);
+                    loadingIndicator.classList.add('hidden');
+                    log('Model loaded successfully!', 'success');
+                },
+                (progress) => {
+                    const percent = Math.round((progress.loaded / progress.total) * 100);
+                    log(`Loading: ${percent}%`, 'info');
+                },
+                (error) => {
+                    loadingIndicator.classList.add('hidden');
+                    log(`Load error: ${error.message}`, 'error');
+                    alert('Failed to load model. Check console for details.');
+                }
+            );
+        }
+        
+        // === UI EVENT HANDLERS ===
+        document.getElementById('enterRallyButton').addEventListener('click', () => {
+            state.homeView.classList.add('hidden');
+            state.rallyView.classList.remove('hidden');
+            state.rallyView.classList.add('fade-in');
+            initMain3D();
+        });
+        
+        document.getElementById('addAssetBtn').addEventListener('click', () => {
+            const url = document.getElementById('addUrl').value.trim();
+            if (url) {
+                loadAsset(url);
+            } else {
+                alert('Please enter a valid URL');
+            }
+        });
+        
+        document.getElementById('loadSampleCar').addEventListener('click', () => {
+            createPlaceholderModel();
+        });
+        
+        document.getElementById('clearModel').addEventListener('click', () => {
+            if (state.mainModel) {
+                state.mainScene.remove(state.mainModel);
+                state.mainModel = null;
+                log('Model cleared', 'info');
+            }
+        });
+        
+        document.getElementById('copyCanvasBtn').addEventListener('click', async () => {
+            try {
+                const canvas = document.getElementById('mainRallyCanvas');
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                log('Image copied to clipboard', 'success');
+                alert('✅ Canvas image copied!');
+            } catch (err) {
+                const canvas = document.getElementById('mainRallyCanvas');
+                const dataURL = canvas.toDataURL('image/png');
+                const textarea = document.createElement('textarea');
+                textarea.value = dataURL;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                log('Data URL copied (fallback)', 'info');
+                alert('📋 Image data copied!');
+            }
+        });
+        
+        document.getElementById('resetViewBtn').addEventListener('click', () => {
+            if (state.mainCamera && state.mainModel) {
+                state.mainCamera.position.set(0, 2, 5);
+                state.mainCamera.lookAt(0, 0, 0);
+                state.mainModel.rotation.set(0, 0, 0);
+                log('View reset', 'success');
+            }
+        });
+        
+        // === HEADER RESIZE ===
+        const resizeHandle = document.getElementById('resizeHandle');
+        const rallyHeader = document.getElementById('rallyHeader');
+        
+        resizeHandle.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            state.headerResizing = true;
+            rallyHeader.style.transition = 'none';
+            
+            const handleMouseMove = (e) => {
+                if (!state.headerResizing) return;
+                const newHeight = e.clientY - rallyHeader.offsetTop;
+                if (newHeight >= config.MIN_HEADER_HEIGHT && newHeight <= config.MAX_HEADER_HEIGHT) {
+                    rallyHeader.style.height = `${newHeight}px`;
+                }
+            };
+            
+            const handleMouseUp = () => {
+                state.headerResizing = false;
+                rallyHeader.style.transition = 'height 0.3s ease-out';
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+                onMainCanvasResize();
+            };
+            
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        });
+        
+        // === SIDEBAR TOGGLE ===
+        const toggleSidebar = document.getElementById('toggleSidebar');
+        const rallySidebar = document.getElementById('rallySidebar');
+        
+        toggleSidebar.addEventListener('click', () => {
+            state.sidebarOpen = !state.sidebarOpen;
+            
+            if (state.sidebarOpen) {
+                rallySidebar.classList.remove('w-0', 'min-w-0', 'p-0');
+                rallySidebar.classList.add('w-1/4', 'max-w-xs', 'p-4');
+                rallySidebar.querySelectorAll('div, h3, label, button, input').forEach(el => el.classList.remove('hidden'));
+                toggleSidebar.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>';
+            } else {
+                rallySidebar.classList.remove('w-1/4', 'max-w-xs', 'p-4');
+                rallySidebar.classList.add('w-0', 'min-w-0', 'p-0');
+                rallySidebar.querySelectorAll('div, h3, label, button, input').forEach(el => el.classList.add('hidden'));
+                toggleSidebar.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>';
+            }
+            
+            onMainCanvasResize();
+        });
+        
+        // === RESPONSIVE SIDEBAR ===
+        const checkSidebarVisibility = () => {
+            if (window.innerWidth >= 768) {
+                state.sidebarOpen = true;
+                rallySidebar.classList.remove('w-0', 'min-w-0', 'p-0');
+                rallySidebar.classList.add('w-1/4', 'max-w-xs', 'p-4');
+                rallySidebar.querySelectorAll('div, h3, label, button, input').forEach(el => el.classList.remove('hidden'));
+            } else {
+                state.sidebarOpen = false;
+                rallySidebar.classList.remove('w-1/4', 'max-w-xs', 'p-4');
+                rallySidebar.classList.add('w-0', 'min-w-0', 'p-0');
+                rallySidebar.querySelectorAll('div, h3, label, button, input').forEach(el => el.classList.add('hidden'));
+            }
+        };
+        
+        window.addEventListener('resize', () => {
+            checkSidebarVisibility();
+            onMainCanvasResize();
+        });
+        
+        // === INITIALIZATION ===
+        window.addEventListener('load', () => {
+            updateLoadingStatus('Loading 3D engine...');
+            
+            // Check Three.js availability
+            if (typeof THREE === 'undefined') {
+                updateLoadingStatus('ERROR: Three.js failed to load');
+                setTimeout(() => {
+                    alert('Failed to load 3D engine. Please refresh the page.');
+                    hideLoading();
+                }, 2000);
+                return;
+            }
+            
+            checkSidebarVisibility();
+            initHome3D();
+            hideLoading();
+        });
+    </script>
+</body>
+</html>
