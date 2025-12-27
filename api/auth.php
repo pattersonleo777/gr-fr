@@ -6,7 +6,6 @@ $data = json_decode(file_get_contents('php://input'), true);
 
 if (($data['action'] ?? '') === 'login') {
     // Captcha Validation
-    $responseKeys = json_decode($response, true);
     
     if (!$responseKeys["success"]) {
         die(json_encode(['success' => false, 'error' => 'Captcha failed']));
