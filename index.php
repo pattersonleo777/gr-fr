@@ -91,6 +91,21 @@ error_reporting(E_ALL);
     </style>
 </head>
 <body class="bg-gray-900 font-inter p-4 sm:p-6 md:p-8 min-h-screen flex justify-center">
+<header class="w-full p-4 bg-gray-900 border-b border-gray-800 flex justify-between items-center sticky top-0 z-50"> 
+    <div class="flex items-center gap-4"> 
+        <span class="text-cyan-400 font-bold text-xl">FANTASY RALLY</span> 
+    </div> 
+    <div class="flex items-center gap-6"> 
+        <a href="index.php" class="text-gray-300 hover:text-white text-sm">Home</a> 
+        <?php if($isLoggedIn): ?> 
+            <a href="profile.php" class="text-gray-300 hover:text-white text-sm">My Profile</a> 
+            <div class="flex items-center gap-2 border-l border-gray-700 pl-6"> 
+                <span class="text-xs text-gray-400">Logged in as:</span> 
+                <span class="text-sm font-semibold text-fuchsia-400"><?php echo htmlspecialchars($username); ?></span> 
+            </div> 
+        <?php endif; ?> 
+    </div> 
+</header>
     <!-- Login Modal -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
@@ -254,6 +269,16 @@ error_reporting(E_ALL);
         
         <!-- Rally Hub View (Initially hidden) -->
         <div id="rallyView" class="hidden w-full h-[85vh] flex flex-col overflow-hidden rounded-2xl shadow-2xl bg-gray-800">
+<div class="p-4 bg-gray-800 rounded-lg mb-4"> 
+    <h3 class="text-white mb-2">Upload Asset</h3> 
+    <input type="file" id="userFileUpload" class="text-xs text-gray-400 mb-2"> 
+    <button onclick="uploadFile()" class="w-full py-1 bg-green-600 text-white rounded text-xs">Upload</button> 
+</div>
+<div class="p-4 bg-gray-800 rounded-lg mb-4"> 
+    <h3 class="text-white mb-2">Upload Asset</h3> 
+    <input type="file" id="userFileUpload" class="text-xs text-gray-400 mb-2"> 
+    <button onclick="uploadFile()" class="w-full py-1 bg-green-600 text-white rounded text-xs">Upload</button> 
+</div>
             <!-- Header (existing code continues...) -->
             <div id="rallyHeader" class="bg-gray-900 text-white flex-shrink-0 relative">
                 <div class="p-3 flex justify-between items-center h-full">
