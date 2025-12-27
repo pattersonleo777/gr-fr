@@ -1,12 +1,12 @@
 <?php
 session_start();
 require '../../vendor/autoload.php'; // Ensure stripe-php is installed via composer
-\Stripe\Stripe::setApiKey('YOUR_STRIPE_SECRET_KEY');
+\Stripe\Stripe::setApiKey('sk_live_your_actual_key');
 
 $checkout_session = \Stripe\Checkout\Session::create([
   'payment_method_types' => ['card'],
   'line_items' => [[
-    'price' => 'PRICE_ID_FROM_STRIPE',
+    'price' => 'price_your_actual_id',
     'quantity' => 1,
   ]],
   'mode' => 'subscription',
