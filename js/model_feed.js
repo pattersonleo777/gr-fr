@@ -1,22 +1,38 @@
 async function loadPublicFeed() {
     const response = await fetch('/api/models.php');
     const files = await response.json();
-    const container = document.querySelector('.red-square-selector'); // Replace with actual class/ID of red box
+    const container = document.getElementById('publicModelFeed');
 
     if (!container) return;
-    container.innerHTML = '<h3 class="text-white text-xs mb-2">Public 3D Feed</h3>';
-    container.style.overflowY = 'auto';
 
-    files.forEach(file => {
-        const name = file.split('/').pop();
-        const card = document.createElement('div');
-        card.className = "bg-gray-800 p-2 mb-2 rounded cursor-pointer hover:border-red-500 border border-transparent transition";
-        card.innerHTML = `
-            <p class="text-[10px] text-gray-300 truncate">${name}</p>
-            <button class="w-full mt-1 bg-red-600 text-[10px] py-1 rounded" 
-                    onclick="loadModelIntoCanvas('${file.replace('../', '')}')">View in 3D</button>
-        `;
-        container.appendChild(card);
-    });
+    // Add Search UI
+    container.innerHTML = `
+        <div class="p-2 border-b border-gray-700">
+            <input type="text" id="modelSearch" placeholder="Search models..." 
+                   class="w-full bg-black text-white text-[10px] p-1 border border-gray-600 rounded">
+        </div>
+        <div id="feedList" class="overflow-y-auto h-full p-2"></div>
+    `;
+
+    const feedList = document.getElementById('feedList');
+
+    const renderList = (filter = '') => {
+        feedList.innerHTML = '';
+        files.filter(f => f.toLowerCase().includes(filter.toLowerCase())).forEach(file => {
+            const name = file.split('/').pop();
+            const card = document.createElement('div');
+            card.className = "bg-gray-900 p-2 mb-2 rounded border border-gray-700 hover:border-red-500 cursor-pointer";
+            card.innerHTML = `
+                <p class="text-[9px] text-gray-400 truncate">${name}</p>
+                <button onclick="loadModelIntoCanvas('${file.replace('../', '')}')" 
+                        class="w-full mt-1 bg-red-900 hover:bg-red-700 text-[9px] py-1 rounded transition">
+                    Load Model
+                </button>`;
+            feedList.appendChild(card);
+        });
+    };
+
+    document.getElementById('modelSearch').oninput = (e) => renderList(e.target.value);
+    renderList();
 }
 document.addEventListener('DOMContentLoaded', loadPublicFeed);
