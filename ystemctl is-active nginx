@@ -1,0 +1,18 @@
+[0;1;32m●[0m php8.4-fpm.service - The PHP 8.4 FastCGI Process Manager
+     Loaded: loaded (]8;;file://srv1100097/usr/lib/systemd/system/php8.4-fpm.service\/usr/lib/systemd/system/php8.4-fpm.service]8;;\; [0;1;38:5:185mdisabled[0m; preset: [0;1;38:5:185mdisabled[0m)
+     Active: [0;1;32mactive (running)[0m since Sat 2025-12-27 11:12:28 UTC; 4min 44s ago
+ Invocation: 29c1abe204e54156b18de8feb072821b
+       Docs: ]8;;man:php-fpm8.4(8)\man:php-fpm8.4(8)]8;;\
+    Process: 30464 ExecStartPost=/usr/lib/php/php-fpm-socket-helper install /run/php/php-fpm.sock /etc/php/8.4/fpm/pool.d/www.conf 84 (code=exited, status=0/SUCCESS)
+   Main PID: 30461 (php-fpm8.4)
+     Status: "[0;1;36mProcesses active: 0, idle: 2, Requests: 3, slow: 0, Traffic: 0.00req/sec[0m"
+      Tasks: 3[0;38;5;245m (limit: 9504)[0m
+     Memory: 11.1M (peak: 12.2M)
+        CPU: 78ms
+     CGroup: /system.slice/php8.4-fpm.service
+             ├─[0;38;5;245m30461 "php-fpm: master process (/etc/php/8.4/fpm/php-fpm.conf)"[0m
+             ├─[0;38;5;245m30462 "php-fpm: pool www"[0m
+             └─[0;38;5;245m30463 "php-fpm: pool www"[0m
+
+Dec 27 11:12:28 srv1100097 systemd[1]: Starting php8.4-fpm.service - The PHP 8.4 FastCGI Process Manager...
+Dec 27 11:12:28 srv1100097 systemd[1]: Started php8.4-fpm.service - The PHP 8.4 FastCGI Process Manager.
